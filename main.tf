@@ -4,40 +4,54 @@ resource "aws_elasticache_subnet_group" "main" {
 
   tags =  merge({
     Name = "${var.component}-${var.env}"
-  },
+  }),
     }
 
+resource "aws_security_group" "main" {
+  name        = "${var.component}-${var.env}-sg"
+  description = "${var.component}-${var.env}-sg"
+  vpc_id = var.vpc_id
 
 
+  ingress {
+    from_port   = var.port
+    to_port     = var.port
+    protocol    = "tcp"
+    cidr_blocks = var.sg_subnet_cidr
 
+  }
 
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
 
+  }
 
-
-
-
-
+  tags = {
+    Name = "${var.component}-${var.env}-sg"
+  }
+}
 
 
 resource "aws_elasticache_replication_group" "main" {
-  replication_group_id       = "tf-redis-cluster"
-  description                = "example description"
-      node_type              = var.node_type
+  replication_group_id       = "${var.component}-${var.env}"
+  description                = "${var.component}-${var.env}"
+  node_type                  = var.node_type
   port                       = var.port
-  parameter_group_name       = "default.redis3.2.cluster.on"
+  parameter_group_name       = var.parameter_group_name
   automatic_failover_enabled = true
+  subnet_group_name = aws_elasticache_subnet_group.main.name
 
-  num_node_groups         = 2
-  replicas_per_node_group = 1
+  num_node_groups            = var.num_node_groups
+  replicas_per_node_group    = var.replicas_per_node_group
+  security_group_ids         = [aws_security_group.main.id]
+  engine                     = var.engine
+  engine_version             = var.engine_version
+  at_rest_encryption_enabled = true
+  kms_key_id                 = var.kms_key_arn
 }
-
-variable "subnet_ids"{}
-variable "component"{}
-variable "env"{}
-variable "node_type"{}
-variable "port"{
-   default = 6379
-    }
 
 
 
