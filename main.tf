@@ -2,9 +2,9 @@ resource "aws_elasticache_subnet_group" "main" {
   name       = "main"
   subnet_ids = var.subnet_ids
 
-  tags =  merge({
+  tags = merge({
     Name = "${var.component}-${var.env}"
-  })
+  }, var.tags)
     }
 
 resource "aws_security_group" "main" {
